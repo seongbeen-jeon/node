@@ -55,8 +55,12 @@ http.createServer(async(req,res)=>{
 /*
 parseCookie()는 쿠키의 key=value 형태를 Js object 형태인 {key : value} 형태로 바꾸는 함수입니다.
 
-29번째 줄 : name = ${encodeURIComponent(name)}는 헤더에 한글이 설정이 안되니 때문에 encode를 하여 특정 다른 문자열로 바꾼 것입니다.
-헤더에서 Content-Type : "charset=utf-8"로 설정해 주면 다시 한글로 나타낼 수 있습니다.
+29번째 줄 : 
+  name = ${encodeURIComponent(name)}는 헤더에 한글이 설정이 안되니 때문에 encode를 하여 특정 다른 문자열로 바꾼 것입니다.
+  헤더에서 Content-Type : "charset=utf-8"로 설정해 주면 다시 한글로 나타낼 수 있습니다.
+
+  expires.toGMTString() 메서드는 Deprecated 되었으므로 toUTCString() 사용이 권장됩니다.
+
 
 쿠키는 브라우저의 Application 탭에서 확인할 수 있듯이 노출되어 있으며 조작되기 쉽습니다.
 따라서 이름 같은 민감한 개인정보를 쿠키에 넣으면 안됩니다.
