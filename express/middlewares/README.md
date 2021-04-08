@@ -1,5 +1,9 @@
 # MiddleWares
 
+미들웨어들은 Express의 정수 입니다. 그 중 자주 쓰이는 몇가지의 미들웨어에 대해 알아보겠습니다.
+
+미들웨어를 사용할때는 인자에 next가 없는 경우가 많은데 대체로 미들웨어 내부에 next()가 존재하고 자동적으로 실행되기 때문입니다.
+
 ## index
 1. morgan
 2. dotenv
@@ -174,21 +178,64 @@ res.clearCookie('name',{
 
 express-session은 세션 관리용 미들웨어입니다. 로그인등의 이유로 세션을 구현하거나 특정 사용자의 정보를 임시적으로 저장할 때 사용합니다.
 
-express-session을 통해 세션을 만들면 req.session 객체안에 유지됩니다. 하지만 이는 쿠키 스스로가 세션 데이터를 저장하는것이 아니고 단지 session Id만을 저장합니다. 세션 데이터는 서버쪽에 저장됩니다.
+express-session을 통해 세션을 만들면 req.session 객체안에 유지됩니다. 하지만 이는 쿠키에 세션 데이터를 저장하는것이 아니고 session ID만 저장합니다. 세션 데이터는 서버쪽에 저장됩니다.
 
-쿠키에서 세션을 다루는 쿠키가 세션 쿠키입니다. 세션 쿠키의 기본 이름은 connent.sid 입니다.
+쿠키에서 세션을 다루는 쿠키가 세션 쿠키입니다. 세션 쿠키의 기본 이름은 ```connent.sid``` 입니다.
 
 express-session 1.5.0 버전 이전에는 cookie-parser를 통해 세션을 관리 했기 때문에 cookie-parser가 express-session 미들웨어 이전에 선언이 됐어야 했습니다. 그러나 1.5.0 이후 부터는 ```req/res``` 객체에 바로 read/write가 가능하기 때문에 cookie-parser를 선언하지 않아도 됩니다. 또한 cookie-parser와 같이 사용할 경우 두 미들웨어의 secret이 같지 않으니 둘이 같은 secret을 사용하는지 신경써야 합니다.
 
-기본적으로 express-session의 session 저장소는 메모리 입니다. 따라서 서버가 재시작하면 세션이 초기화 되고 메모리가 가득 차면 더이상의 세션을 생성할 수 없습니다. 따라서 다른 저장소를 사용하여 관리를 해주는것이 좋습니다. 대체로 **Redis**를 사용합니다.
+기본적으로 express-session의 session 저장소는 메모리 입니다. 따라서 서버를 재시작하면 세션이 초기화 되고 메모리가 가득 차면 더이상의 세션을 생성할 수 없습니다. 따라서 다른 저장소를 사용하여 관리를 해주는것이 좋습니다. 대체로 **Redis**를 사용합니다.
 
 express-session으로 만들어진 세션은 req.session객체에 보관되어 있으니 해당 객체에 접근하여 세션을 관리할 수 있습니다.
 
+
+### session 사용하기
+
+session을 사용하여 세션을 관리할 객체 req.session을 만듭니다. 
+
+```javascript
+const session = require('express-session');
+
+app.use(session({
+  resave: false ,
+  saveUninitialized: false ,
+  secret:process.env.COOKIE_SECRET ,
+  cookie:{
+    httpOnly:true,
+    secure:false
+  },
+  name:connect.sid
+}));
+```
+
+```express-session```은 사용할 때 인수로 세션에 대한 옵션을 받습니다.
+
+**resave** : 요청이 올 때 마다 세션을 다시 저장할 것인지 묻는 옵션입니다. 변경의 유무와는 상관없기 때문에 항상 저장 됩니다. ```Default:True``` 이지만 디폴트로 사용하는 것은 Deprecated 되었기 때문에 명시 해주는것이 좋습니다.
+만약 client가 parallel한 여러 요청을 보낼 시 race condition을 만들 수 있기 때문에 주의해주어야 합니다. 어느 한 세션이 변경되어 저장되었음에도 변경되지 않은 세션이 resave되어 overwritten 될 수 있기 때문입니다.
+
+**saveUninitialized** : 내용이 없는 세션을 저장할것인지 묻는 옵션입니다. 새로 생성했지만 아직 초기화를 하지 않아 데이터가 없는 빈 세션을 저장할 때 쓰입니다. ```Default:True``` 입니다. 하지만 Deprecated 되었기 때문에 명시하여 사용해주도록 합시다.```True```일때 아직 세션이 존재하지 않는 client가 parallel 한 요청을 보낼 때 race condition이 생길 수 있습니다.
+
+**secret** : sessio ID 쿠키를 서명할 때 사용합니다.
+
+### session 쿠키 다루기
+
+session을 통해 req.session을 만들었으면 세션쿠키를 다룰 수 있습니다. 방법은 매우 간단합니다.
+
+```javascript
+req.session.name = 'seongbeen'; // 세션 등록
+req.session[name] = 'seongbeen-jeon' // session.name 값 변경
+req.sessionID; // 세션 ID 확인
+req.session.destroy(callback) // 모든 세션 제거 
+
+req.session.save(callback) // 세션 저장
+```
+
+res.session은 매우 직관적이고 간단합니다. req.session.save()는 세션을 저장하는 메서드 입니다. 하지만 HTTP Response가 날라갈때 자동적으로 실행되니 직접 실행해주지 않아도 됩니다. 특정 상황에서만 실행해주는데 redirect나 웹 소켓에서 시간이 오래걸리는 요청등에서만 사용 됩니다.
 
 ### Reference
 
 [npm express-session](https://www.npmjs.com/package/express-session)
 
 
-
+## Body-Parser
 
