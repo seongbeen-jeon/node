@@ -239,3 +239,95 @@ res.session은 매우 직관적이고 간단합니다. req.session.save()는 세
 
 ## Body-Parser
 
+```body-parser```는 request의 body에 존재 하는 값들을 분석하여 req.body 객체를 만듭니다. 보통 Form 데이터나 AJAX 요청의 데이터를 처리합니다. 단 multipart 데이터는 처리 하지 못합니다.
+
+```body-parser```는 설치하여 사용할 수 있지만 express 4.16.0 버전 부터는 바디파서 미들웨어의 일부 기능이 express에 내장되어 따로 설치하지 않아도 됩니다. ```json```,```url-encoded``` 형식의 데이터는 내장되어 있지만 Raw, Text 형식은 내장되어 있지 않아 바디파서를 설치해야 합니다.
+
+### 사용법
+
+```javascript
+// json, URL-encoded는 내장되어있어 express 에서 바로 사용할 수 있습니다.
+app.use(express.json());
+app.use(express.urlencoded({extended: false}));
+
+//Raw, Text 형식은 body-parser를 설치하여 사용해야 합니다.
+const bodyParser = require('body-parser');
+app.use(bodyParser.Raw()); //Raw는 요청의 본문이 버퍼 데이터 입니다.
+app.use(bodyParser.Text());//Text는 텍스트 데이터 입니다.
+```
+
+json은 JSON 형태의 데이터 전달 방식을 이고 urlencoded는 url의 쿼리스트링을 통한 전달 방식입니다. ```extended: false```를 하면 내장된 querystring 모듈을 사용하고 ```True``` 일때는 npm의 qs 모듈을 사용합니다. qs모듈은 설치해야 하며 querystring 모듈의 확장판입니다.
+
+HTTP Method가 POST, PUT 일때 서버에서 ```req.on('data')```를 통해 값을 받았습니다. 요청이 스트림형식이기 때문입니다. body-parser에서는 내부적을 스트림을 처리하기 때문에 바로 req.body로 사용할 수 있습니다.
+
+### 데이터의 형식
+
+JSON 형식의 데이터는 { name : 'seongbeen', book:'nodejs'} 이런 모양으로 들어옵니다. 바디파서를 사용하면 같은 모양으로 req.body로 들어옵니다.
+
+urlencoded 형식으로 name=seongbeen&book=nodejs 이런 모양으로 온다면 바디파서를 통해 {name:'seongbeen', book:'nodejs'} 이런 모양으로 req.body로 들어옵니다.
+
+### Reference
+
+[npm body-parser](https://www.npmjs.com/package/body-parser)
+
+-조현영 지음, Node.js 교과서 개정2판, 길벗(2020), p237-238
+
+
+
+## Path
+
+Path 모듈은 Node에서 제공해주는 모듈로 파일이나 디렉터리의 위치를 잡는데 사용됩니다.
+
+```javascript
+//선언
+const path = require('path');
+```
+
+### path.join([...paths])
+
+파일이나 디렉터리의 위치를 잡을 때 주로 사용하는 메서드입니다. 옵션으로는 string 형태의 경로를 줍니다. 결과값으로는 주어진 옵션들을 합친 string 형태의 경로가 나옵니다.
+
+또한 옵션의 데이터타입이 string이 아닐때 에러를 생성합니다.
+
+```javascript
+path.join('/foo','bar','node');
+//return : '/foo/bar/node'
+
+path.join('/foo',{},'bar');
+//return : Throws 'TypeError: Path must be a string. Received {}'
+```
+
+### 사용법
+
+path는 사용할 때 Node의 Global 객체에 들어있는 __dirname, __filename과 같이 쓰이는 경우가 많습니다.
+
+__dirname 은 현재 모듈의 경로를 알려줍니다. ```path.dirname()```과 같은 일을합니다.
+__filename은 현재 모듈의 파일 이름을 포함한 경로를 나타냅니다. 
+
+
+### Reference
+
+[Node Path](https://nodejs.org/api/path.html)
+
+
+## Static
+
+static 미들웨어는 정적인 파일을 제공하는 라우터 역할을 하는 미들웨어입니다. 기본적으로 제공되기 때문에 설치나 선언을 하지않고 사용할 수 있습니다.
+
+```javascript
+//syntax
+app.use('요청 경로',express.static('정적 파일을 제공할 경로'))
+
+app.use('/', express.static('/image'));
+
+//주로 사용하는 형태
+app.use(express.static(path.join(__dirname,'/public')));
+```
+
+실제 경로에는 정작파일을 제공할 경로('/public')등이 포함되지만 클라이언트는 그 위치를 몰라도 접근할 수 있게 됩니다. 따라서 클라이언트가 접근할 수 있는 영역을 분리시켜 서버의 구조를 숨길 수 있어 보안에 큰 도움이 됩니다.
+
+정적인 파일을 알아서 제공해주기 때문에 fs.readFile 등의 메서드를 실행할 필요 없습니다. 또한 요청들어온 파일이 존재하지 않다면 알아서 next를 사용하기 때문에 다른 미들웨어에서 Error로 처리할 수 있습니다. 파일이 존재한다면 next를 실행하지 않고 끝나 파일을 제공합니다.
+
+### Reference
+
+-조현영 지음, Node.js 교과서 개정2판, 길벗(2020), p237
