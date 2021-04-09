@@ -12,6 +12,7 @@
 5. body-parser
 6. path
 7. static
+8. 미들웨어 활용하기
 
 ## morgan
 
@@ -331,3 +332,81 @@ app.use(express.static(path.join(__dirname,'/public')));
 ### Reference
 
 -조현영 지음, Node.js 교과서 개정2판, 길벗(2020), p237
+
+
+## 미들웨어 활용하기
+
+미들웨어를 사용할 때 인자로 ```(req,res,next)```를 넣어줍니다. 에러 처리용 미들웨어만 특별히 err 인자 까지 포함해 ```(err,req,res,next)```를 인자로 받습니다.
+
+### next
+
+npm이나 express등에서 제공하는 미들웨어를 사용할 때 next를 인자로 보내지 않는 이유는 이러한 모듈들에서 내부적으로 사용하기 때문입니다. 따라서 순서에 따라 next를 통해 미들웨어가 실행될 수 있고 실행되지 않을 수 있습니다.
+
+특정 미들웨어에 의해 다른 미들웨어들이 실행되지 않는 경우입니다.
+```javascript
+// static 미들웨어에서 성공적으로 실행을 맞춰 연결이 끝난 경우
+// static 밑에 존재하는 미들웨어들은 실행되지 않습니다.
+
+app.use(
+  morgan('dev'),
+  express.static(path.join('/public')),
+  express.json(),
+  express.urlencoded({extend:false}),
+  cookieParser(process.env.COOKIE_SECRET)
+);
+```
+
+next를 사용할 때 아무 인자를 넣지 않는 형태로 사용했지만 인자를 넣으면 해당 미들웨어로 이동합니다.
+
+```javascript
+app.use((req,res,next)=>{
+  //...
+  next(); // 바로 다음 미들웨어로 넘어갑니다.
+})
+app.use((req,res,next)=>{
+  //...
+  next(err); // 에러 처리 미들웨어로 넘어갑니다.
+})
+app.use((req,res,next)=>{
+  //이전 미들웨어에서 next(err)을 통해 에러처리 미들웨어로 넘겼으므로 실행되지 않습니다.
+})
+app.use((err,req,res,next)=>{
+  //...
+})
+```
+
+### 미들웨어간 데이터 공유
+
+응답을 처리하기위해 이전 미들웨어에서 사용한 데이터를 다른 미들웨어에서도 사용할 수 있어야 합니다.
+
+```app.set('data',value)```를 통해 서버에 저장할 수 있지만 이런 경우 서버에 저장되기 때문에 다른 요청들과 혼합될 수 있습니다. app.set은 주로 서버를 설정할 때 사용합니다.
+
+```app.session```을 통해서도 세션에 데이터를 저장할 수 있지만 이는 세션이 유지되는 동안 데이터가 유지되니 같은 유저의 다른요청에서도 유지됩니다. 따라서 메모리가 낭비되거나 값이 혼합될 수 있으니 좋지 못한 방식입니다.
+
+```req``` 요청 객체를 사용하면 알맞는 데이터 공유를 할 수 있습니다. 해당 요청에 대해서만 데이터가 유지되고 특정될 수 있으니 간결하면서도 좋은 방식입니다. 그러나 속성명이 겹치지 않게 주의 해야합니다. ex) req.body, req.session 등..
+
+```javascript
+app.use((req,res,next)=>{
+  req.data = '저장할 데이터';
+  next();
+})
+
+app.use((req,res,next)=>{
+  console.log(req.data);
+  //output : 저장할 데이터
+})
+```
+
+### 미들웨어에서 미들웨어 사용하기
+
+미들웨어 안에서 미들웨어를 사용할 수 있습니다. 더욱 유연하고 미들웨어의 기능을 확장할 수 있습니다.
+
+```javascript
+app.use((req,res,next)=>{
+  if(process.env.NODE_ENV === 'PRODUCTION'){
+    morgan('combined')(req,res,next);
+  }else{
+    morgan('dev')(rqe,res,next);
+  }
+});
+```
