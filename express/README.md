@@ -37,3 +37,19 @@ Process.env는 시스템 환경변수 뿐만아니라 임의로 환경 변수를
 const secretID = process.env.SECRET_ID;
 const secretCODE = process.env.SECRET_CODE;
 ```
+
+
+## req,res
+
+express의 req,res 객체는 http 모듈의 req,res 객체를 확장한 것입니다. 따라서 기존 res.writeHead, res.write, res.end 등의 메서드들을 사용할 수 있지만 express의 기능이 워낙 편리하여 잘 사용하지 않는다고 합니다.
+
+### 메서드 체이닝
+
+req, res 객체의 메서드는 메서드 체이닝을 지원하는 경우가 많습니다. 메서드 체이닝을 사용하여 코드를 더 줄일 수 있습니다.
+
+``javascript
+res
+  .status(201)
+  .cookie('name','seongbeen')
+  .redirect('/admin')
+```
