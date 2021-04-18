@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+{{message}}
+{{error.status}}
+{{error.stack}}
+{% endblock %}
+
+<!--
+변수는 res.render 함수를 실행할 때 받아와 렌더링 과정에서 처리 됩니다.
+랜더링 과정에서 인자로 변수값을 넘겨주지 않으면 res.locals 객체 안에 들어있느 변수를 사용합니다.
+해당 객체는 하나의 요청에 대한 값들을 다루기 위해 존재하기 때문에 다른 요청들과 같은 공유하지 않습니다.
+
+-->
