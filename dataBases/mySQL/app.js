@@ -6,6 +6,10 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 const {sequelize} = require('./models'); //index는 생략해도 사용이 가능합니다.
+const indexRouter = require('./routes');
+const usersRouter = require('./routes/users');
+const commentsRouter = require('./routes/comments');
+
 
 const app = express();
 app.set('port',process.env.PORT || 3000);
@@ -26,6 +30,10 @@ app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname,'public')));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
+
+app.use('/',indexRouter);
+app.use('/users',usersRouter);
+app.use('/comments',commentsRouter);
 
 app.use((req,res,next)=>{
   const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);

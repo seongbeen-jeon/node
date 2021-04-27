@@ -1,10 +1,17 @@
 const Sequelize = require('sequelize');
 
 module.exports = class Comment extends Sequelize.Model {
-  static init(Sequelize){
+  static init(sequelize){
     return super.init({
-      comment : {},
-      created_at : {}
+      comment : {
+        type : Sequelize.STRING(100),
+        allowNull : false
+      },
+      created_at : {
+        type : Sequelize.DATE,
+        allowNull : true,
+        defaultValue : Sequelize.NOW
+      }
     },{
       sequelize,
       timestamps : false,
@@ -12,7 +19,7 @@ module.exports = class Comment extends Sequelize.Model {
       tableName : 'comments',
       paranoid : false,
       charset: 'utf8mb4',
-      collate: 'utf8mb4_generic_ci'
+      collate: 'utf8mb4_general_ci'
     });
   }
   
